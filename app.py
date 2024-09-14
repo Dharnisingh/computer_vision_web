@@ -1,11 +1,11 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request
 import cv2
 import numpy as np
 import mediapipe as mp
 from collections import deque
 
 app = Flask(__name__)
-
+rtsp_url = ''
 # Giving different arrays to handle colour points of different colour
 bpoints = [deque(maxlen=1024)]
 gpoints = [deque(maxlen=1024)]
@@ -44,13 +44,13 @@ hands = mpHands.Hands(max_num_hands=1, min_detection_confidence=0.7)
 mpDraw = mp.solutions.drawing_utils
 
 # Initialize the webcam
-cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture(rtsp_url)
 
-def generate_frames():
+def generate_frames(rtsp_url):
     global bpoints, gpoints, rpoints, ypoints
     global blue_index, green_index, red_index, yellow_index
     global colorIndex, paintWindow
-
+    cap = cv2.VideoCapture(rtsp_url)
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -152,14 +152,21 @@ def generate_frames():
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    global rtsp_url
+    if request.method == 'POST':
+        rtsp_url = request.form.get('rtsp_url')  # Get RTSP URL from form input
+        return render_template('index.html', rtsp_url=rtsp_url)
     return render_template('index.html')
 
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+   global rtsp_url
+   if rtsp_url:  # Ensure the RTSP URL is provided
+        return Response(generate_frames(rtsp_url), mimetype='multipart/x-mixed-replace; boundary=frame')
+   return "No RTSP URL provided"
 
 
 if __name__ == '__main__':
