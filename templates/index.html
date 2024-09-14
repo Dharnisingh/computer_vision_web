@@ -7,6 +7,15 @@
 </head>
 <body>
     <h1>Hand Gesture Drawing</h1>
+    <h2>Enter RTSP Stream URL</h2>
+    <form method="POST" action="/">
+        <input type="text" name="rtsp_url" placeholder="Enter RTSP URL" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if rtsp_url %}
+    <h2>Streaming from: {{ rtsp_url }}</h2>
     <img src="{{ url_for('video_feed') }}" width="640" height="480">
+    {% endif %}
 </body>
 </html>
